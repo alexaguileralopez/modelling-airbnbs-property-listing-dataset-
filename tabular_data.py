@@ -6,11 +6,11 @@ import numpy as np
 # function to remove rows with missing ratings
 def remove_rows_with_missing_ratings(df):
 
-    df = df[~df['Cleanliness_rate'].isna()]
-    df = df[~df['Accuracy_rate'].isna()]
-    df = df[~df['Location_rate'].isna()]
-    df = df[~df['Check-in_rate'].isna()]
-    df = df[~df['Value_rate'].isna()]
+    df = df[~df['Cleanliness_rating'].isna()]
+    df = df[~df['Accuracy_rating'].isna()]
+    df = df[~df['Location_rating'].isna()]
+    df = df[~df['Check-in_rating'].isna()]
+    df = df[~df['Value_rating'].isna()]
 
     return df
 
@@ -26,6 +26,7 @@ def combine_description_strings(df):
              row['Description']= ast.literal_eval(row['Description'])
 
              return row
+        
         #elif isinstance(next_column, str) and next_column.strip().startswith('['):
         elif not isinstance(row['Description'], str) or not row['Description'].strip().startswith('[') and row['Amenities'].strip().startswith('['):
             row['Description'] = row['Amenities']
@@ -77,18 +78,17 @@ def set_default_feature_values(df):
     # replacing empty entries with value 1
 
     df['guests'] = df['guests'].apply(lambda x: 1 if x== np.nan else x)
+    df['beds'] = df['beds'].apply(lambda x: 1 if x== np.nan else x)
     df['bathrooms'] = df['bathrooms'].apply(lambda x: 1 if x== np.nan else x)
     df['bedrooms'] = df['bedrooms'].apply(lambda x: 1 if x== np.nan else x)
-
-
 
     return df
 
 def clean_tabular_data(raw_dataframe):
 
-        df = pd.read_csv(raw_dataframe)
+        #df = pd.read_csv(raw_dataframe)
 
-        df = remove_rows_with_missing_ratings(df)
+        df = remove_rows_with_missing_ratings(raw_dataframe)
         df = combine_description_strings(df)
         df = set_default_feature_values(df)
 
@@ -105,6 +105,6 @@ def load_airbnb(df= pd.DataFrame , label=str):
 
 if __name__ == '__main__':
      
-     df = pd.read_csv('listing.csv', mode='r')
+     df = pd.read_csv('listing.csv')
      df= clean_tabular_data(df)
-     df.to_csv('clean_tabular_data.csv', index=False)
+     df.to_csv('clean_tabular_data.csv', index=False, mode = 'w' )

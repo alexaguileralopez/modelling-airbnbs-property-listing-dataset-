@@ -3,18 +3,30 @@ import pandas as pd
 import ast
 import numpy as np
 
-# function to remove rows with missing ratings
+
 def remove_rows_with_missing_ratings(df):
+
+    ''' removing rows with missing values in the rating columns'''
 
     df = df[~df['Cleanliness_rating'].isna()]
     df = df[~df['Accuracy_rating'].isna()]
+    df = df[~df['Communication_rating'].isna()]
     df = df[~df['Location_rating'].isna()]
     df = df[~df['Check-in_rating'].isna()]
     df = df[~df['Value_rating'].isna()]
 
+    df = df[~df['Price_Night'].isna()] # if price does not exist, not useful
+
+
     return df
 
 def combine_description_strings(df):
+
+    '''function to convert description column to list and concatenate its elements 
+
+    to form a text-like structure stored as a string'''
+
+
     # Removing missing descriptions
     df.dropna(subset=['Description'], inplace=True)
 
@@ -27,7 +39,7 @@ def combine_description_strings(df):
 
              return row
         
-        #elif isinstance(next_column, str) and next_column.strip().startswith('['):
+     
         elif not isinstance(row['Description'], str) or not row['Description'].strip().startswith('[') and row['Amenities'].strip().startswith('['):
             row['Description'] = row['Amenities']
             row['Amenities'] = row['Location']
@@ -71,22 +83,25 @@ def combine_description_strings(df):
 
     return df
 
-    return df
+    
 
 def set_default_feature_values(df):
 
-    # replacing empty entries with value 1
+    '''replacing empty entries with value 1'''
 
-    df['guests'] = df['guests'].apply(lambda x: 1 if x== np.nan else x)
-    df['beds'] = df['beds'].apply(lambda x: 1 if x== np.nan else x)
-    df['bathrooms'] = df['bathrooms'].apply(lambda x: 1 if x== np.nan else x)
-    df['bedrooms'] = df['bedrooms'].apply(lambda x: 1 if x== np.nan else x)
+
+    df['guests'] = df['guests'].apply(lambda x: 1 if pd.isnull(x) else x)
+    df['beds'] = df['beds'].apply(lambda x: 1 if pd.isnull(x) else x)
+    df['bathrooms'] = df['bathrooms'].apply(lambda x: 1 if pd.isnull(x) else x)
+    df['bedrooms'] = df['bedrooms'].apply(lambda x: 1 if pd.isnull(x) else x)
+
 
     return df
 
 def clean_tabular_data(raw_dataframe):
-
-        #df = pd.read_csv(raw_dataframe)
+        
+        ''' contains all the functions defined earlier
+          to clean the data step by step'''
 
         df = remove_rows_with_missing_ratings(raw_dataframe)
         df = combine_description_strings(df)
@@ -96,14 +111,33 @@ def clean_tabular_data(raw_dataframe):
 
 def load_airbnb(df= pd.DataFrame , label=str):
      
+     ''' Function used to split the data into labels and features. 
+     It takes as arguments the dataframe where the data is to be extracted and 
+     the name of the variable that is wanted as label '''
+     
      labels = df[label]
+
+     # filter out columns with text data
+
+     numerical_cols= ['guests', 'beds', 'bathrooms', 'Price_Night', 'Cleanliness_rating',
+            'Accuracy_rating', 'Communication_rating', 'Location_rating', 'Check-in_rating', 
+            'Value_rating', 'amenities_count', 'bedrooms']
+     
+     df = df[numerical_cols]
+     
+
      features = df.drop(label, axis=1)
 
      tuple_data = (features, labels)
 
      return tuple_data
 
+
+
+
 if __name__ == '__main__':
+     
+     ''' saving the clean tabular data in a csv file'''
      
      df = pd.read_csv('listing.csv')
      df= clean_tabular_data(df)

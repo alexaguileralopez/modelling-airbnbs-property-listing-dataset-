@@ -113,7 +113,7 @@ In the first case, the model does not fill well the training data. The RMSE valu
 - RMSE_train = 2015344407.52
 - R^2_train = -209238121347827.88
 
-[y_train_predictions](code_snippets/y_train_SGDR.png)
+![y_train_predictions](code_snippets/y_train_SGDR.png)
 
 As expected from the last case, the model also does not fit well the testing data.
 
@@ -122,7 +122,7 @@ As expected from the last case, the model also does not fit well the testing dat
 
 Those two values indicate very poor model performance.
 
-[y_test_predicitons](code_snippets/y_test_SGDR.png)
+![y_test_predicitons](code_snippets/y_test_SGDR.png)
 
 
 

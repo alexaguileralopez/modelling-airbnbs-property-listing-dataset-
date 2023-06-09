@@ -87,7 +87,7 @@ def combine_description_strings(df):
 
 def set_default_feature_values(df):
 
-    '''replacing empty entries with value 1'''
+    '''replacing empty entries with value 1 '''
 
 
     df['guests'] = df['guests'].apply(lambda x: 1 if pd.isnull(x) else x)
@@ -115,18 +115,26 @@ def load_airbnb(df= pd.DataFrame , label=str):
      It takes as arguments the dataframe where the data is to be extracted and 
      the name of the variable that is wanted as label '''
      
-     labels = df[label]
-
-     # filter out columns with text data
+    # filter out columns with text data
 
      numerical_cols= ['guests', 'beds', 'bathrooms', 'Price_Night', 'Cleanliness_rating',
             'Accuracy_rating', 'Communication_rating', 'Location_rating', 'Check-in_rating', 
             'Value_rating', 'amenities_count', 'bedrooms']
      
-     df = df[numerical_cols]
+     labels = df[label].to_numpy(dtype= 'float64')
+     features = df[numerical_cols].drop(label, axis=1)
+     features = features.to_numpy(dtype='float64')
+
+     #features = df[numerical_cols].to_numpy(dtype= 'float64').drop(label, axis = 1).reset_index(drop=True)
+
+     #features = df1.drop(label, axis=1)
+     
+   
+    
+     
      
 
-     features = df.drop(label, axis=1)
+     #features = features.values
 
      tuple_data = (features, labels)
 

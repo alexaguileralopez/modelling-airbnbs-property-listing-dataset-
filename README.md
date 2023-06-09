@@ -1,12 +1,15 @@
-# modelling-airbnbs-property-listing-dataset-
+# MODELLING AIRBNB'S PROPERTY LISTING DATASET
 
 This project consists in building a framework to systematically train, tune, and evaluate models on several tasks that are tackled by the Airbnb team.
 
+The information available are images of the properties and tabular data, which contains information such as ID, category, price, number of beds or different ratings. 
 
-## Milestone 3: Data preparation
+## DATA PREPARATION
+
+The first task to approach is preparing the data so it is suitable for modelling. 
 
 Before building the framework, the dataset has to be structured and clean. 
-Inside the listing.csv file, there is a tabular dataset with the following columns:
+Inside the files, there is a tabular dataset with the following columns:
 
 - ID: Unique identifier for the listing
 - Category: The category of the listing
@@ -28,13 +31,11 @@ Inside the listing.csv file, there is a tabular dataset with the following colum
 - bedrooms: The number of bedrooms in the listing
 
 The file [tabular_data.py] is created to manage that tabular data, and perform its cleaning process.
-The first step is to define a function to remove the rows with missing ratings. This is done by simply keeping the rows in the dataframe that contain values in the ratings columns:
+
+The function [remove_rows_with_missing_ratings(df)] performs this filtering in the ratings
 
     df = df[~df['Cleanliness_rating'].isna()]
-    df = df[~df['Accuracy_rating'].isna()]
-    df = df[~df['Location_rating'].isna()]
-    df = df[~df['Check-in_rating'].isna()]
-    df = df[~df['Value_rating'].isna()]
+
 
 The description column contains lists of strings that pandas does not recognise as such, instead it recognises them as strings. All of the lists begin with the same pattern, so a nested function is created with an if/else statement. If this condition is satisfied, the function ast.literal_eval is used to transform those strings into lists:
 
@@ -69,52 +70,59 @@ However, there is one row where the elements from the description column are shi
 Lastly, repeated string pieces are removed and the list is joined as a string, getting the description as a full text:
 
     df['Description'] = df['Description'].apply(lambda x: [item for item in x if item != ''])
-    df['Description'] = df['Description'].apply(lambda x: [item for item in x if item != 'About this space'])
-    df['Description'] = df['Description'].apply(lambda x: [item for item in x if item != 'The space'])
-    df['Description'] = df['Description'].apply(lambda x: [item for item in x if item != 'License number'])
-    df['Description'] = df['Description'].apply(lambda x: [item for item in x if item != 'Other things to note'])
-    df['Description'] = df['Description'].apply(lambda x: [item for item in x if item != 'Guest acess'])
+...
 
     df['Description'] = df['Description'].apply(lambda x: ' '.join(x))
 
+Some columns such as beds or guests have empty values that cannot be set to 0, therefore they are set to 1 with the function [set_default_feature_values(df)]
 
-The 'beds', 'guests', 'bathrooms', 'bedrooms' columns have empty values for some rows, so a function is defined to set a default value to 1 in those.
+     df['guests'] = df['guests'].apply(lambda x: 1 if pd.isnull(x) else x)
 
-    df['guests'] = df['guests'].apply(lambda x: 1 if x== np.nan else x)
-    df['beds'] = df['beds'].apply(lambda x: 1 if x== np.nan else x)
-    df['bathrooms'] = df['bathrooms'].apply(lambda x: 1 if x== np.nan else x)
-    df['bedrooms'] = df['bedrooms'].apply(lambda x: 1 if x== np.nan else x)
+All these functions are called from a function called [clean_tabular_data(raw_dataframe)]that returns the processed data.
 
-All these functions are called from a function called clean_tabular_data, that returns the processed data:
+In order to use this data for modelling, the data needs to be separated into features and labels. 
 
-    def clean_tabular_data(raw_dataframe):
+For now, the columns including text data are filtered out, and just the numeric tabular data is used, which is transformed to numpy arrays format to be suitable for modelling. 
+[load_airbnb(df= pd.DataFrame , label=str)] is created to separate the dataset into two sets containing a label and features. 
 
-        #df = pd.read_csv(raw_dataframe)
+## CREATING A REGRESSION MODEL
 
-        df = remove_rows_with_missing_ratings(raw_dataframe)
-        df = combine_description_strings(df)
-        df = set_default_feature_values(df)
+For this task, it is useful to use the sklearn library, as it contains several models and functions that are used for machine learning modelling. A new file [modelling.py] is created.
 
-        return df
+The data is loaded from the previous script, and the label selected is 'Price_Night'. Therefore, the aim is to train and test different models into guessing the Price_Night according to the relations of the different features with the training labels. 
 
-To save that new clean dataframe, that last function is called and saved inside an if __name__ = '__main__'
+    dataset =tabular_data.load_airbnb(df= df_1, label= 'Price_Night')
 
-    if __name__ == '__main__':
-     
-     df = pd.read_csv('listing.csv')
-     df= clean_tabular_data(df)
-     df.to_csv('clean_tabular_data.csv', index=False, mode = 'w' )
+    X, y = dataset
 
+For testing purposes, the data is split 70/30 into training and testing:
 
-In order to get the data in the right format for testing, a function is created to divide the features and labels of the data in a tuple. The label is stored as a new variable and the dataframe drops the label:
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size= 0.3) # splitting dataset
 
-    def load_airbnb(df= pd.DataFrame , label=str):
-     
-     labels = df[label]
-     features = df.drop(label, axis=1)
+The first model used is a Stochastic Gradient Descent Regressor, which supports different loss functions and penalties to fit linear regression models. This model is well suited for regression problems with a large number of training samples. 
 
-     tuple_data = (features, labels)
+    myModel = SGDRegressor().fit(X_train, y_train)
 
-     return tuple_data
+Predictions are made on the training and testing data:
+
+    y_train_pred = myModel.predict(X_train)
+    y_test_pred = myModel.predict(X_test)
+
+In the first case, the model does not fill well the training data. The RMSE value for y_train_pred and y_train is 2015344407.52, which is super large. The R^2, similarly, is also very large and negative, indicating poor model performance.
+
+- RMSE_train = 2015344407.52
+- R^2_train = -209238121347827.88
+
+[y_train_predictions](code_snippets/y_train_SGDR.png)
+
+As expected from the last case, the model also does not fit well the testing data.
+
+- RMSE_test = 2077415679.79
+- R^2_test = -424609764864478.56
+
+Those two values indicate very poor model performance.
+
+[y_test_predicitons](code_snippets/y_test_SGDR.png)
+
 
 

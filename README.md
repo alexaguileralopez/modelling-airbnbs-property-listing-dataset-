@@ -108,21 +108,25 @@ Predictions are made on the training and testing data:
     y_train_pred = myModel.predict(X_train)
     y_test_pred = myModel.predict(X_test)
 
-In the first case, the model does not fill well the training data. The RMSE value for y_train_pred and y_train is 2015344407.52, which is super large. The R^2, similarly, is also very large and negative, indicating poor model performance.
+To test the performance of the model, RMSE and r2 are calculated:
 
-- RMSE_train = 2015344407.52
-- R^2_train = -209238121347827.88
+
+- RMSE (training set): 96.10435783399384
+- R2 (training set): 0.42403429169597195
+
+These values indicate poor model performance. Ideally, RMSE would be around 0. This value suggests that there is some level of prediction error. On the other hand an r2 value of 0.42 means that only 42% of the variability in the target variable can be explained by the model. 
 
 ![y_train_predictions](code_snippets/y_train_SGDR.png)
 
-As expected from the last case, the model also does not fit well the testing data.
+On the testing set, a similar result is obtain. As expected, RMSE is higher, as this is the testing data and the error is expected to be higher, and only 37.7% of the variability in the target variable can be explained by the model.
 
-- RMSE_test = 2077415679.79
-- R^2_test = -424609764864478.56
+- RMSE (test set): 106.04102194634366
+- R2 (test set): 0.377140169198409
 
-Those two values indicate very poor model performance.
 
 ![y_test_predicitons](code_snippets/y_test_SGDR.png)
 
+
+Given those results, the best way to improve the metrics is by hyperparameter tuning. 
 
 

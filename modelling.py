@@ -2,28 +2,19 @@ import tabular_data
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import SGDRegressor
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.model_selection import GridSearchCV
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import itertools
 import statistics
+from joblib import dump
+import json
+import os
 
-''' It would be a good idea to split things into different functions and calling them later
-
-        First function should be something like preparing the data and should prepare the dataset and scale the training data if necessary
-
-        Second should do the work on trying out the SGDRegressor
-
-        Third should be hyperparameter modelling
-
-        Another function for plotting
-
-'''
-
-df = pd.read_csv('airbnb-property-listings/listing.csv')
-df_1= tabular_data.clean_tabular_data(raw_dataframe= df)
-dataset =tabular_data.load_airbnb(df= df_1, label= 'Price_Night')
 
 # setting random seed to obtain same predictions each time program is run, 
 # given same input data and model
@@ -31,10 +22,16 @@ dataset =tabular_data.load_airbnb(df= df_1, label= 'Price_Night')
 random_seed = 42
 np.random.seed(random_seed)
 
+
+
+df = pd.read_csv('airbnb-property-listings/listing.csv')
+df_1= tabular_data.clean_tabular_data(raw_dataframe= df)
+dataset =tabular_data.load_airbnb(df= df_1, label= 'Price_Night')
+
+
+
 X, y = dataset # assigning features(X) and labels (y)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size= 0.3, random_state= random_seed) # splitting dataset
-
-print(X_train.shape, y_train.shape, X_test.shape, y_test.shape)
 
 # using a standard scaler to scale input
 scaler = StandardScaler().fit(X_train)
@@ -42,27 +39,42 @@ scaler = StandardScaler().fit(X_train)
 X_train = scaler.transform(X_train)
 X_test = scaler.transform(X_test)
 
-myModel = SGDRegressor(random_state= random_seed).fit(X_train, y_train)
 
 
-y_train_pred = myModel.predict(X_train)
-y_test_pred = myModel.predict(X_test)
+def first_model(X_train = X_train, y_train= y_train, X_test=X_test, y_test=y_test):
 
-print(y_train_pred.shape, y_test_pred.shape)
+    ''' Function to try the SGDRegressor using the data imported. Takes as arguments all of the labels and features and makes 
+        a prediction for the testing set.
+        It also measures rmse and r2 score for training and testing set and returns a dictionary including all these values.
+    
+    '''
 
+    # creating model 
+    myModel = SGDRegressor(random_state= random_seed)
 
+    # training the model
+    myModel.fit(X_train, y_train) 
 
+    # making predictions
+    y_train_pred = myModel.predict(X_train) 
+    y_test_pred = myModel.predict(X_test)
 
-rmse_train = mean_squared_error(y_train, y_train_pred, squared= False)
-rmse_test = mean_squared_error(y_test, y_test_pred, squared= False)
+    # calculating RMSE 
+    rmse_train = mean_squared_error(y_train, y_train_pred, squared= False)
+    rmse_test = mean_squared_error(y_test, y_test_pred, squared= False)
 
-r2_train = r2_score(y_train, y_train_pred)
-r2_test = r2_score(y_test, y_test_pred)
+    # calculating R2 score
+    r2_train = r2_score(y_train, y_train_pred)
+    r2_test = r2_score(y_test, y_test_pred)
 
-print("RMSE (training set):", rmse_train)
-print("RMSE (test set):", rmse_test)
-print("R2 (training set):", r2_train)
-print("R2 (test set):", r2_test)
+    metrics= {
+    "RMSE (training set)": rmse_train,
+    "RMSE (test set)": rmse_test,
+    "R2 score (training set)": r2_train,
+    "R2 score (test set)": r2_test
+    }
+
+    return metrics
 
 
 def plotting_prediction(y_pred, y_true, title=str):
@@ -104,37 +116,139 @@ def custom_tune_regression_model_hyperparameters(model_class: type, train_set, v
 
         rmse_val = mean_squared_error(y_val, y_val_pred, squared= False)
 
-        r2_val = r2_score(y_train, y_train_pred)
+        r2_val = r2_score(y_train, y_val_pred)
 
 
         if r2_val > best_score:
             best_score = r2_val
             best_hyperparameters = combination
         else:
-            None
+            best_score = best_score
+            best_hyperparameters = best_hyperparameters
 
 
     return best_score, best_hyperparameters
 
+def tune_regression_model_hyperparameters(model_class: type, train_set, val_set, test_set, grid = dict):
 
-parameter_grid = {
+    X_train, y_train = train_set
+    X_test, y_test = test_set
+    X_val, y_val = val_set
+
+    model = model_class()
+
+    grid_search = GridSearchCV(estimator= model, param_grid= grid, scoring= 'r2', cv= 5)
+
+    grid_search.fit(X_train, y_train)
+
+    # Retrieve the best hyperparameters
+    best_params = grid_search.best_params_
+
+    # Retrieve the best estimator
+    best_estimator = grid_search.best_estimator_
+
+    # Retrieve the best score
+    best_score = grid_search.best_score_
+
+    # Retrieve the detailed results
+    cv_results = grid_search.cv_results_
+
+ 
+
+    return best_params, best_estimator, best_score, cv_results
+
+def save_model(model, hyperparameters, metrics, folder):
+
+    # Create the directory structure if it doesn't exist
+    os.makedirs(folder, exist_ok=True)
+    
+    # Save the model in the folder
+    dump(model, folder + '/model.joblib')
+
+    # Save the hyperparameters to hyperparameters.json
+    with open(folder + '/hyperparameters.json', 'w') as hyperparameters_file:
+        json.dump(hyperparameters, hyperparameters_file)
+
+    # Save the metrics to metrics.json
+    with open(folder + '/metrics.json', 'w') as metrics_file:
+        json.dump(metrics, metrics_file)
+
+    return 
+
+def evaluate_all_models(): 
+
+    ''' 
+        Function to evaluate the performance of SGDRegressor, Decision Trees, 
+        Random Forests, and Gradient Boosting algorithms on the dataset
+    '''
+    models = {'SGDRegressor': (SGDRegressor, parameter_grid_SGDRegressor), 
+              'DecisionTreeRegressor': (DecisionTreeRegressor, parameter_grid_DecisionTree),
+              'RandomForestRegressor':  (RandomForestRegressor, parameter_grid_RandomForest),
+              'GradientBoostingRegressor': (GradientBoostingRegressor, parameter_grid_GradientBoost)
+                                            
+                                            }
+
+    ''' Would be best to import a parameter grid for each of the models, so as a dict?'''
+
+    for model_name in models:
+
+        model_class, parameter_grid = models[model_name]
+
+        # Get the model name
+        model_name = model_class.__name__
+
+
+
+        best_params, best_estimator, best_score, cv_results, = tune_regression_model_hyperparameters(model_class= model_class, 
+                                                            train_set= train_set, val_set= val_set, test_set= test_set, grid= parameter_grid)
+        
+        # Define the folder path for saving the model
+        folder_path = os.path.join('models', 'regression', model_name)
+        save_model(model= best_estimator, hyperparameters= best_params, metrics= best_score, folder= folder_path)
+
+    return
+
+''' separation between functions and data manipulation'''
+
+
+df = pd.read_csv('airbnb-property-listings/listing.csv')
+df_1= tabular_data.clean_tabular_data(raw_dataframe= df)
+dataset =tabular_data.load_airbnb(df= df_1, label= 'Price_Night')
+
+X, y = dataset # assigning features(X) and labels (y)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size= 0.3, random_state= random_seed) # splitting dataset
+
+# using a standard scaler to scale input
+scaler = StandardScaler().fit(X_train)
+
+X_train = scaler.transform(X_train)
+X_test = scaler.transform(X_test)
+
+parameter_grid_SGDRegressor = {
 
     'penalty': ['l1', 'l2', 'elasticnet', None],
     'loss' : ['squared_error', 'huber', 'epsilon_insensitive', 'squared_epsilon_insensitive'],
     'alpha' : [0.1, 0.01, 0.001, 0.0001],
     'learning_rate': ['constant', 'optimal', 'invscaling', 'adaptive'],
-    'max_iter': [10000, 50000]
+    'max_iter': [1000, 10000, 50000]
 
 }
 
-parameter_grid_test = {
+parameter_grid_DecisionTree = {
 
-    'penalty': ['l1', 'l2'],
-    'loss' : ['squared_error', 'huber'],
-    'alpha' : [0.1, 0.01],
-    'learning_rate': ['constant', 'optimal']
-
+    ''' fill with different hyperparameters and values for DT'''
 }
+
+parameter_grid_RandomForest = {
+
+    ''' fill with different hyperparameters and values for RF'''
+}
+
+parameter_grid_GradientBoost = {
+
+    ''' Fill with different hyperparameters and values for GB'''
+}
+
     
 # splitting test set into test and validation sets 
 X_test, X_val, y_test, y_val = train_test_split(X_test, y_test, test_size= 0.5, random_state= random_seed) 
@@ -144,10 +258,24 @@ test_set = (X_test, y_test)
 val_set = (X_val, y_val)
 
 
-best_scoring, best_parameters = custom_tune_regression_model_hyperparameters(model_class= SGDRegressor, train_set= train_set, val_set= val_set, test_set= test_set, grid= parameter_grid)
 
-print('Best score is:', best_scoring)
-print('Ideal hyperparameters for the model are:', best_parameters)
+#best_scoring, best_parameters = custom_tune_regression_model_hyperparameters(model_class= SGDRegressor, train_set= train_set, val_set= val_set, test_set= test_set, grid= parameter_grid)
+
+''' best_params, best_estimator, best_score, cv_results, = tune_regression_model_hyperparameters(model_class= SGDRegressor, train_set= train_set, val_set= val_set, test_set= test_set, grid= parameter_grid)
+
+print('Best score is:', best_score)
+print('Ideal hyperparameters for the model are:', best_params)
+
+save_model(model= best_estimator, hyperparameters= best_params, metrics= best_score, folder= 'models/regression/linear_regression') '''
+
+#if __name__ == "main":
+
+evaluate_all_models()
+
+
+
+
+
 
 
 

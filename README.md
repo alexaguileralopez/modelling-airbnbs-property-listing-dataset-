@@ -129,4 +129,62 @@ On the testing set, a similar result is obtain. As expected, RMSE is higher, as 
 
 Given those results, the best way to improve the metrics is by hyperparameter tuning. 
 
+## HYPERPARAMETER TUNNING
+
+A function called ustom_tune_regression_model_hyperparameters() is created to custom tune the parameters of the model by grid search from scratch. The function takes as arguments:
+
+    def custom_tune_regression_model_hyperparameters(model_class: type, train_set, val_set, test_set, grid = dict):
+
+- Model class
+- Training set
+- Validation set
+- Testing set
+- A dictionary with key value pairs that contain each hyperparameter and their different values
+
+This function performs a manual grid search to obtain the best hyperparameters for the model. With the use of itertools, iterations over all the combinations of parameters can be performed:
+
+    combinations = itertools.product(*grid.values())
+
+The grid values are the following:
+
+    parameter_grid = {
+
+    'penalty': ['l1', 'l2', 'elasticnet', None],
+    'loss' : ['squared_error', 'huber', 'epsilon_insensitive', 'squared_epsilon_insensitive'],
+    'alpha' : [0.1, 0.01, 0.001, 0.0001],
+    'learning_rate': ['constant', 'optimal', 'invscaling', 'adaptive'],
+    'max_iter': [1000, 10000, 50000]
+
+    }
+
+First, the function trains the model with the training set. Then, it iterates over all combinations possible and makes predictions for the validating set. With that data, it calculates r2 and RMSE, and selects the highest r2 score to be the best one. 
+
+------ THIS PART NEEDS TO BE RE-RUN BECAUSE r2 was not comparing the validation set
+
+Best score is: 0.42403429169597195
+Ideal hyperparameters for the model are: ('l1', 'squared_error', 0.1, 'constant', 1000)
+
+While an R2 score of 0.42 indicates some level of predictive power, it suggests that there is still a significant portion of the target variable's variation (~58%) that the model is unable to explain. There is still room for improvement.
+
+-------
+
+Sk-learn provides a grid search algorithm (GridSearchCV) that already does all that work for the user. A new function called tune_regression_model_hyperparameters() is created to make use of this algorithm and compare with the previous result, where it was done manually. The function takes the same arguments as earlier, and creates an instance of the GridSearchCV class:
+
+    grid_search = GridSearchCV(estimator= model, param_grid= grid, scoring= 'r2', cv= 5)
+
+This object already provides all the data necessary to make a valoration of the model's performance. The results obtained are:
+
+Best score is: 0.3837917450772203
+Ideal hyperparameters for the model are: {'alpha': 0.1, 'learning_rate': 'optimal', 'loss': 'squared_epsilon_insensitive', 'max_iter': 10000, 'penalty': 'elasticnet'}
+
+Rarely, the best score is lower than the one obtained performing the grid search manually, and the ideal parameters also change. 
+Why?? --------
+
+
+
+
+
+
+
+
 

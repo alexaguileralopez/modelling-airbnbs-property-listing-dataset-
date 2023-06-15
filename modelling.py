@@ -236,17 +236,35 @@ parameter_grid_SGDRegressor = {
 
 parameter_grid_DecisionTree = {
 
-    ''' fill with different hyperparameters and values for DT'''
+    
+    'criterion' : ['squared_error', 'friedman_mse', 'absolute_error', 'poisson'],
+    'splitter' : ['best', 'random'],
+    'max_depth' : [3,5,7, None],
+    'min_samples_split' : [2, 5, 10 ],
+    'min_samples_leaf': [1, 3, 5],
+    'max_features' : ['auto', 'sqrt', 'log2']
+
 }
 
 parameter_grid_RandomForest = {
 
-    ''' fill with different hyperparameters and values for RF'''
+    'n_estimators' : [100,200,300],
+    'max_depth' : [5,10, None],
+    'min_samples_split' : [2,5,10],
+    'min_samples_leaf' : [1,3,5],
+    'max_features' :  ['auto', 'sqrt', 'log2'],
+    'criterion' : ['squared_error', 'absolute_error', 'friedman_mse', 'poisson'] 
 }
 
 parameter_grid_GradientBoost = {
 
-    ''' Fill with different hyperparameters and values for GB'''
+    'learning_rate': [0.01, 0.1, 0.5],
+    'n_estimators': [100, 200, 300],
+    'max_depth': [3, 5, None],
+    'min_samples_split' : [2, 5, 10],
+    'min_samples_leaf' : [1, 3, 5],
+    'max_features' : ['auto', 'sqrt', 'log2'],
+    'loss' : ['absolute_error', 'quantile', 'squared_error', 'huber'] 
 }
 
     

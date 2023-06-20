@@ -286,9 +286,9 @@ print('Ideal hyperparameters for the model are:', best_params)
 
 save_model(model= best_estimator, hyperparameters= best_params, metrics= best_score, folder= 'models/regression/linear_regression') '''
 
-#if __name__ == "main":
+if __name__ == "__main__":
 
-evaluate_all_models()
+    evaluate_all_models()
 
 
 

@@ -178,7 +178,27 @@ Best score is: 0.3837917450772203
 Ideal hyperparameters for the model are: {'alpha': 0.1, 'learning_rate': 'optimal', 'loss': 'squared_epsilon_insensitive', 'max_iter': 10000, 'penalty': 'elasticnet'}
 
 Rarely, the best score is lower than the one obtained performing the grid search manually, and the ideal parameters also change. 
-Why?? --------
+
+##  FINDING THE BEST REGRESSOR MODEL
+
+In order to evaluate different types of regression models, a function called evaluate_all_models() is created. This function passes different regressors into the function tune_regression_model_hyperparameters(), that makes use of sci-kit learn grid search to find the best hyperparameters for each model, and measure their performance.
+
+The models tested are:
+- Stochastic Gradient Descent Regressor
+    - 
+- Decision Tree Regressor
+    - Versatile and can handle both numerical and categorical data
+    - Easy to interpret, as the tree structure provides clear rules for decision-making
+    - Able to capture non-linear relationships and interaction between variables
+    - Robust to outliers and can handle missing values
+- Random Forest Regressor
+- Gradient Boosting Regressor
+
+For each model, a different grid has been created, with different values for hyperparameters. The function evaluate_all_models(), does a grid search of these hyperparameters and extracts the best model, hyperparameters and metrics for each of them. After that, it saves them in the local folder models/regression. 
+
+In order to find the best model, a function called find_best_model() is applied. This function basically compares the metrics of all the stored models in the previous step, and returns the characteristics of the model with the highest r2. 
+
+
 
 
 

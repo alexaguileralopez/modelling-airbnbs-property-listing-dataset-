@@ -11,7 +11,7 @@ import pandas as pd
 import numpy as np
 import itertools
 import statistics
-from joblib import dump
+from joblib import dump, load
 import json
 import os
 
@@ -96,11 +96,14 @@ def plotting_prediction(y_pred, y_true, title=str):
 
 def custom_tune_regression_model_hyperparameters(model_class: type, train_set, val_set, test_set, grid = dict):
 
- # Function to find best hyperparameters for the model
+    ''' Function to find best hyperparameters for the model.
+    An addition to the function should be to implement k-fold cross validation
+ 
+    '''
    
 
     X_train, y_train = train_set
-    X_test, y_test = test_set
+    X_test, y_test = test_set # not necessary for hyperparameter tuning
     X_val, y_val = val_set
 
     combinations = itertools.product(*grid.values()) 
@@ -129,11 +132,12 @@ def custom_tune_regression_model_hyperparameters(model_class: type, train_set, v
 
     return best_score, best_hyperparameters
 
-def tune_regression_model_hyperparameters(model_class: type, train_set, val_set, test_set, grid = dict):
+def tune_regression_model_hyperparameters(model_class: type, train_set, grid = dict):
+
+    ''' Should eliminate test set and val set if not used.'''
 
     X_train, y_train = train_set
-    X_test, y_test = test_set
-    X_val, y_val = val_set
+
 
     model = model_class()
 
@@ -200,13 +204,53 @@ def evaluate_all_models():
 
 
         best_params, best_estimator, best_score, cv_results, = tune_regression_model_hyperparameters(model_class= model_class, 
-                                                            train_set= train_set, val_set= val_set, test_set= test_set, grid= parameter_grid)
+                                                            train_set= train_set, grid= parameter_grid)
         
         # Define the folder path for saving the model
         folder_path = os.path.join('models', 'regression', model_name)
         save_model(model= best_estimator, hyperparameters= best_params, metrics= best_score, folder= folder_path)
 
     return
+
+def find_best_model():
+
+
+    ''' This function finds the best model saved in the respository. 
+    Its purpose is to be used after all models have been evaluated and saved.
+    '''
+
+    folder_path = 'models/regression'  
+
+    best_metrics = 0.0
+
+
+    subfolder_names = [name for name in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, name))]
+
+    for folder_name in subfolder_names:
+        file_path = os.path.join('models/regression', folder_name, 'metrics.json')
+
+        with open(file_path, 'r') as file:
+            model_metrics = float(file.read())
+            
+            print(model_metrics)
+
+            if model_metrics >= best_metrics:
+                best_metrics = model_metrics
+                best_model = folder_name
+
+            else: 
+                best_metrics = best_metrics
+
+
+    model = load(os.path.join('models/regression', best_model, 'model.joblib'))
+
+    with open(os.path.join('models', 'regression', best_model, 'hyperparameters.json'), 'r') as json_file:
+        # Load the JSON data
+        hyperparameters = json.load(json_file)
+
+    return model, hyperparameters, best_metrics # cv results are not saved in the files, so not used here
+
+
 
 ''' separation between functions and data manipulation'''
 
@@ -224,6 +268,13 @@ scaler = StandardScaler().fit(X_train)
 X_train = scaler.transform(X_train)
 X_test = scaler.transform(X_test)
 
+# splitting test set into test and validation sets 
+X_test, X_val, y_test, y_val = train_test_split(X_test, y_test, test_size= 0.5, random_state= random_seed) 
+
+train_set = (X_train, y_train)
+test_set = (X_test, y_test)
+val_set = (X_val, y_val)
+
 parameter_grid_SGDRegressor = {
 
     'penalty': ['l1', 'l2', 'elasticnet', None],
@@ -239,20 +290,20 @@ parameter_grid_DecisionTree = {
     
     'criterion' : ['squared_error', 'friedman_mse', 'absolute_error', 'poisson'],
     'splitter' : ['best', 'random'],
-    'max_depth' : [3,5,7, None],
+    'max_depth' : [3,5,7],
     'min_samples_split' : [2, 5, 10 ],
     'min_samples_leaf': [1, 3, 5],
-    'max_features' : ['auto', 'sqrt', 'log2']
+    
 
 }
 
 parameter_grid_RandomForest = {
 
     'n_estimators' : [100,200,300],
-    'max_depth' : [5,10, None],
+    'max_depth' : [5,10],
     'min_samples_split' : [2,5,10],
     'min_samples_leaf' : [1,3,5],
-    'max_features' :  ['auto', 'sqrt', 'log2'],
+
     'criterion' : ['squared_error', 'absolute_error', 'friedman_mse', 'poisson'] 
 }
 
@@ -260,20 +311,15 @@ parameter_grid_GradientBoost = {
 
     'learning_rate': [0.01, 0.1, 0.5],
     'n_estimators': [100, 200, 300],
-    'max_depth': [3, 5, None],
+    'max_depth': [3, 5],
     'min_samples_split' : [2, 5, 10],
     'min_samples_leaf' : [1, 3, 5],
-    'max_features' : ['auto', 'sqrt', 'log2'],
+   
     'loss' : ['absolute_error', 'quantile', 'squared_error', 'huber'] 
 }
 
     
-# splitting test set into test and validation sets 
-X_test, X_val, y_test, y_val = train_test_split(X_test, y_test, test_size= 0.5, random_state= random_seed) 
 
-train_set = (X_train, y_train)
-test_set = (X_test, y_test)
-val_set = (X_val, y_val)
 
 
 
@@ -289,6 +335,10 @@ save_model(model= best_estimator, hyperparameters= best_params, metrics= best_sc
 if __name__ == "__main__":
 
     evaluate_all_models()
+    best_model = find_best_model()
+
+
+   
 
 
 

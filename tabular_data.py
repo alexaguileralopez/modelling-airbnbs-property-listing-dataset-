@@ -121,9 +121,14 @@ def load_airbnb(df= pd.DataFrame , label=str):
             'Accuracy_rating', 'Communication_rating', 'Location_rating', 'Check-in_rating', 
             'Value_rating', 'amenities_count', 'bedrooms']
      
-     labels = df[label].to_numpy(dtype= 'float64')
-     features = df[numerical_cols].drop(label, axis=1)
-     features = features.to_numpy(dtype='float64')
+     #labels = df[label].to_numpy(dtype= 'float64')
+     labels = df[label]
+
+     if label in numerical_cols:
+        features = df[numerical_cols].drop(label, axis=1)
+     else:
+        features = df[numerical_cols]
+     #features = features.to_numpy(dtype='float64')
 
      #features = df[numerical_cols].to_numpy(dtype= 'float64').drop(label, axis = 1).reset_index(drop=True)
 

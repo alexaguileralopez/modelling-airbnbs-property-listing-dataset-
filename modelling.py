@@ -1,10 +1,11 @@
 import tabular_data
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import SGDRegressor
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+from sklearn.linear_model import SGDRegressor, LogisticRegression
+from sklearn.tree import DecisionTreeRegressor, DecisionTreeClassifier
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor, RandomForestClassifier, GradientBoostingClassifier
 from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 from sklearn.model_selection import GridSearchCV
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -156,10 +157,46 @@ def tune_regression_model_hyperparameters(model_class: type, train_set, grid = d
 
     # Retrieve the detailed results
     cv_results = grid_search.cv_results_
-
  
-
     return best_params, best_estimator, best_score, cv_results
+
+def tune_classification_model_hyperparameters(model_class: type, train_set, val_set, test_set, grid = dict):
+
+    ''' function to find best hyperparameters for a classification model'''
+
+
+    X_train, y_train = train_set
+    X_test, y_test = test_set 
+    X_val, y_val = val_set
+
+    model = model_class()
+
+    grid_search = GridSearchCV(estimator= model, param_grid= grid, scoring= 'accuracy', cv= 5)
+
+    grid_search.fit(X_train, y_train)
+
+    best_params = grid_search.best_params_
+    best_estimator = grid_search.best_estimator_
+    cv_results = grid_search.cv_results_
+
+    y_val_pred = best_estimator.predict(X_val)
+
+    # Calculate performance metrics on the validation set
+    accuracy = accuracy_score(y_val, y_val_pred)
+    precision = precision_score(y_val, y_val_pred, average= 'macro')
+    recall = recall_score(y_val, y_val_pred, average= 'macro')
+    f1 = f1_score(y_val, y_val_pred, average= 'macro')
+
+    # Store the performance metrics in a dictionary
+    performance_metrics = {
+        'validation_accuracy': accuracy,
+        'validation_precision': precision,
+        'validation_recall': recall,
+        'validation_f1': f1
+    }
+
+
+    return best_params, best_estimator, performance_metrics
 
 def save_model(model, hyperparameters, metrics, folder):
 
@@ -319,7 +356,17 @@ parameter_grid_GradientBoost = {
 }
 
     
+parameter_grid_DecisionTree_classifier = {
 
+    'max_depth' : [3,5,7], # how many levels of splits and branches the tree can have
+    'min_samples_split' : [2, 5, 10 ],
+    'min_samples_leaf': [1, 3, 5],
+    'criterion' : ['squared_error', 'friedman_mse', 'absolute_error', 'poisson'],
+    'splitter' : ['best', 'random'],
+    
+}
+
+parameter_grid_RandomForest_classifier = {}
 
 
 

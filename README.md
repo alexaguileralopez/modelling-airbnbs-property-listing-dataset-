@@ -198,10 +198,44 @@ For each model, a different grid has been created, with different values for hyp
 
 In order to find the best model, a function called find_best_model() is applied. This function basically compares the metrics of all the stored models in the previous step, and returns the characteristics of the model with the highest r2. 
 
+The best model turned out to be SGDRegressor, with a r2 score of 0.3837917450772203. The ideal parameters for it were: 
+
+    {"alpha": 0.1, "learning_rate": "optimal", "loss": "squared_epsilon_insensitive", "max_iter": 10000, "penalty": "elasticnet"}
+
+
+''' THINGS TO IMPROVE: GRADIENT BOOST TAKES REALLY LONG, analyse better the parameters so that we remove the unnecessary and it does not take that long to run. '''
+
+## BUILDING A CLASSIFICATION MODEL
+
+In order to study if properties in the dataset can be separated by category depending on their features, a classification model (Logistic Regression) has been implemented. This time, the label is 'Category'.
+Ideally, the model would classificate the different properties in their corresponding categories according to the features that properties of the same category have in common.
+
+To study the classification performance, confussion matrices have been plotted, and different metrics have been analysed:
+
+In this first image, the Confusion Matrix for training data can be observed.
+
+![Logistic Regression training data](code_snippets/LogReg_train.png)
+
+The metrics for the training data show:
+- Accuracy = 0.43201376936316693
+- Precision = 0.4396341816930052
+- Recall = 0.41982557364836615
+- F1 score = 0.4136005969989438
+
+As the accuracy is relatively low, this is an indication that the model is only predicting correctly around 43% of the time. 
+This last F1 score suggests that the model's performance on the training data is relatively low in terms of both precision and recall. A lower F1 score indicates that the model struggles to achieve both high precision and high recall simultaneously. This could imply that the model is either missing many positive instances (low recall) or incorrectly classifying too many instances as positive (low precision). 
 
 
 
+![Logistic Regression test data](code_snippets/LogReg_test.png)
 
+The metrics for the test data show:
+- Accuracy = 0.3815261044176707
+- Precision = 0.382529317814238
+- Recall = 0.3804497354497355
+- F1 score = 0.3591211866770788
+
+As expected in testing data, all the metrics are lower than in training data. Overall, the values indicate that the model's performance is really low, with accuracy, precision, recall, and F1 all around 38%. It may be necessary to further evaluate the model, explore alternative approaches or techniques, and consider potential improvements to enhance the model's performance. 
 
 
 

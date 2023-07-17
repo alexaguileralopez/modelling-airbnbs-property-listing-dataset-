@@ -1,1 +1,1 @@
-{"C": 10.0, "penalty": "l2", "solver": "liblinear"}
+{"C": 10.0, "penalty": "l1", "solver": "liblinear"}

@@ -17,7 +17,6 @@ import json
 import os
 from classification_hyper import parameter_grid_DecisionTreeClassifier, parameter_grid_GradientBoostClassifier, parameter_grid_RandomForestClassifier, parameter_grid_LogisticRegressor
 from regression_hyper import parameter_grid_DecisionTree, parameter_grid_GradientBoost, parameter_grid_RandomForest, parameter_grid_SGDRegressor
-
 from modelling_v1 import BaseModel, RegressionModel
 
 
@@ -30,14 +29,12 @@ class BaseModel():
         self.test_size = test_size
         self.hyperparameters = None
         
-
         pass
 
     def _create_model_instance(self) -> type: 
 
         '''
-        Building a model instance depending on model_type
-        
+        Building a model instance depending on model_type   
         '''
 
         if self.model_type == "RandomForestRegressor":
@@ -81,14 +78,11 @@ class BaseModel():
         
         return train_set, test_set, val_set
 
-
     def preprocess(self, X):
 
         '''Scaling data'''
-        
         scaler = StandardScaler().fit(X)
         X = scaler.transform(X)
-        
         return X
     
     def load_hyperparameters(self, hyperparameters):
@@ -117,8 +111,10 @@ class BaseModel():
     
     def evaluate(self, test_set, model_type):
 
-        '''Performs evaluation of the model, with a two-case scenario of 
-        regression and classification.'''
+        '''
+        Performs evaluation of the model, with a two-case scenario of 
+        regression and classification.
+        '''
 
         X_test, y_test = test_set
         X_test = self.preprocess(X_test)

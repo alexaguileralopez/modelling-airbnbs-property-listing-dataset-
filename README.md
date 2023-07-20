@@ -87,9 +87,79 @@ For now, the columns including text data are filtered out, and just the numeric 
 
 ## CREATING A BASE MODEL
 
-A base model is built to 
+A base model is built to set the base of the rest of the models (classification and regression) that will be used for this task. This models contains multiple methods that are common between the application of regression and classification models, such as fitting, evaluation, or creating a model instance. This model acts as a parent class.
+
+The main method in this class is 
+   def _create_model_instance(self) -> type:
+
+    if self.model_type == "RandomForestRegressor":
+        model_instance = RandomForestRegressor()
+        model_instance.estimators_ = []
+    elif self.model_type == "RandomForestClassifier":
+        model_instance = RandomForestClassifier()
+    elif self.model_type == "DecisionTreeRegressor":
+        model_instance = DecisionTreeRegressor()
+    elif self.model_type == "DecisionTreeClassifier":
+        model_instance = DecisionTreeClassifier()
+    ...
+
+which returns the desired model instance type according to the string of the model that is specified:
+
+    model = BaseModel(model_type= 'DecisionTreeClassifier')
+
+The two child classes built are classification and regression models, those inherit methods such as __init__, load_hyperparameters, fit, evaluate. Some of them require different functioning, but the slight differences they posses are simple parameters that can be adjusted when building the model. For example, in the case of the evaluation method, it requires the model type:
+
+    def evaluate(self, test_set):
+
+        f1 = super().evaluate(model_type= 'Classifier', test_set= test_set)
+        return f1
+
+In this case, what is interesting to know in a classifier, when performing its evaluation, is the f1 score, so the base model method has to be adjusted to decide if it calculates the metrics for a regression model (r2, MSE) or for a classification model (accuracy, precision, recall, f1).
+
+This is an efficient way of being able to build more model types without altering the base model. 
+
+In addition, there is also a save_model method which saves the model, hyperparameters and metrics locally.
 
 
+## CREATING A CLASSIFICATION MODEL
+
+The ClassificationModel inherits from the BaseModel class. The differences with it is that the tunning of hyperparameters is unique to the classification model, as the scoring is different. 
+
+
+    model = ClassificationModel(model_type= 'DecisionTreeClassifier')
+
+The method 
+
+    tune_classification_model_hyperparameters(self, train_set, val_set, grid)
+
+makes use of the training set to perform a grid search (GridSearchCV) and finds the best hyperparameters for the classification model. What is then stored as the instance of the model itself is the best model chosen, with the best hyperparameters found. 
+
+The file from which the hyperparameters are extracted is classification_hyper.py, which contains different dictionaries with lists of hyperparameters to try on the different models: Decision Tree Classifier, Random Forest Classifier, Gradient Boost Classifier and Logistic Regression.
+
+## CREATING A REGRESSION MODEL
+
+As the last class, the RegressionModel also inherits from the BaseModel class. In this case, there are some extra methods such as 
+
+    def first_model(self,train_set, test_set) -> dict:
+
+Which is a method that could be outside of the class, but it is used to create a model with default hyperparameters, train it, and deliver results.
+On the other hand, there is a method to perform a 'manual' grid search of all hyperparameters in the hyperparameter grid.
+
+    def custom_tune_regression_hyperparameters(self, train_set, val_set, grid)-> dict:
+
+On the other side, it contains as well a method that makes use of grid search (scoring= r2) to define which are the most suitable hyperparameters for the model chosen.
+
+## MODEL EVALUATION
+
+To evaluate the performance of all models, a class called ModelsEvaluator is created. This class contains methods to evaluate all models based on gridsearchCV and to find the best model amongst the ones built (either regression or classification).
+
+The method to evaluate all models performs a grid search over all possible models and stores the best estimator, combinaiton of hyperparameters and scores in an attribute called best_models of the class. 
+
+To find the best out of the best models stored, a method called find_best_model is created, and this should be run after performing the general evaluation. This method looks into self.best_models.items() and compares the model data. Then, it choses the one with the best metrics and returns the resulting best model. 
+
+As the evaluation of all models can be a long running process, a method to find the best model stored locally is also created. It does the same comparison but, instead of running the evaluation of all models, it can be run directly and will compare the metrics in the models that have been saved in the models directory. 
+
+## RESULTS
 
 
 

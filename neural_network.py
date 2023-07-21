@@ -1,6 +1,7 @@
 import torch
 import time
 import os
+import random
 from datetime import datetime
 from torch.utils.data.dataset import Dataset
 from torch.utils.data import DataLoader
@@ -63,9 +64,13 @@ class regression_NN(torch.nn.Module):
     '''Class responsible for defining the structure 
     and forward pass of the neural network.'''
 
-    def __init__(self, hidden_layer_width, depth) -> None:
+    def __init__(self, hidden_layer_width, depth, dropout_rate) -> None:
         super().__init__()
-        self.hyperparameters = None
+        self.hyperparameters = {
+            'hidden_layer_width' : hidden_layer_width,
+            'depth' : depth,
+            'dropout_rate' : dropout_rate
+        }
         self.metrics = {}
         self.hidden_layer_width = hidden_layer_width
         self.depth = depth
@@ -74,7 +79,9 @@ class regression_NN(torch.nn.Module):
         input_size = 11
         for i in range(depth):
             layers.append(torch.nn.Linear(input_size, hidden_layer_width))
+            layers.append(torch.nn.BatchNorm1d(hidden_layer_width)) # Batch Normalisation
             layers.append(torch.nn.ReLU())
+            layers.append(torch.nn.Dropout(dropout_rate)) # Dropout
             input_size = hidden_layer_width
         
         layers.append(torch.nn.Linear(input_size, 1))
@@ -87,10 +94,15 @@ class regression_NN(torch.nn.Module):
         return self.layers(X)
     
     def get_hyperparameters(self):
-        return {
-            'hidden_layer_width' : self.hidden_layer_width,
-            'depth' : self.depth
-        }
+        
+        if self.hidden_layer_width is not None and self.depth is not None:
+            return {
+                'hidden_layer_width' : self.hidden_layer_width,
+                'depth' : self.depth,
+                'lr' : self.hyperparameters['lr'],
+                'optimiser' : self.hyperparameters ['optimiser'],
+                'dropout_rate' : self.hyperparameters['dropout_rate']
+            }
     
     def calculate_rmse_loss(self,prediction, labels):
         mse_loss = F.mse_loss(prediction, labels)
@@ -148,6 +160,9 @@ class regression_NN(torch.nn.Module):
         end_time = time.time()
         training_duration = end_time - start_time
         self.metrics['training_duration'] = training_duration
+
+        self.hyperparameters['lr'] = lr
+        self.hyperparameters['optimiser'] = optimiser_name
     
     def get_metrics(self, data_loader):
 
@@ -203,7 +218,21 @@ class regression_NN(torch.nn.Module):
         # creating folder with current date and time
         current_datetime = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
         folder_path = os.path.join(parent_folder_path, current_datetime)
-        os.makedirs(folder_path)
+        folder_counter = 1
+
+        while True:
+            folder_name = current_datetime
+            if folder_counter > 1:
+                folder_name += f"_v{folder_counter}"
+            
+            folder_path = os.path.join(parent_folder_path, folder_name)
+            try:
+                os.makedirs(folder_path)
+                break
+
+            except FileExistsError:
+                folder_counter += 1
+
         
         # saving PyTorch model in a 'model.pt' file
         model_path = os.path.join(folder_path, 'model.pt')
@@ -221,15 +250,86 @@ class regression_NN(torch.nn.Module):
         with open(metrics_path, 'w') as file:
             json.dump(metrics, file)
 
+    
+
             
 def get_nn_config(file_path):
 
-    '''
-    Function to get the neural network configuration
+    ''' Function to get the neural network configuration
     '''
     with open(file_path, 'r') as file:
         config_data = yaml.safe_load(file)
     return config_data
+
+def generate_nn_configs(n_configs):
+
+    '''Function that generates a specified number of configurations 
+    combining the different parameters used in this script for neural 
+    network configuration'''
+
+    optimisers = ['SGD', 'Adam']
+    learning_rates = [0.001, 0.01, 0.1]
+    hidden_layer_widths = [8,16,32]
+    depths = [3,4,5]
+    dropout_rates = [0.2, 0.3, 0.5]
+
+    configs = []
+    for i in range(n_configs):
+        config = {
+            'optimiser' : random.choice(optimisers),
+            'lr' : random.choice(learning_rates),
+            'hidden_layer_width' : random.choice(hidden_layer_widths),
+            'depth' : random.choice(depths),
+            'dropout_rate' : random.choice(dropout_rates)
+            
+        }
+        configs.append(config)
+
+    return configs
+
+def find_best_nn(train_loader, val_loader, test_loader, folder_path, n_configs):
+    
+    best_model = None
+    best_metrics = None
+    best_hyperparameters = None
+    best_metric_distance= float('-inf') # closer to 0 is best
+
+    # generate model configurations
+    configs = generate_nn_configs(n_configs= n_configs)
+
+    for model_config in configs:
+
+        model = regression_NN(hidden_layer_width= model_config['hidden_layer_width'], depth= model_config['depth'], dropout_rate= model_config['dropout_rate'])
+        model.train(train_data_loader= train_loader, val_data_loader= val_loader, epochs= 10, config= model_config)
+        model.evaluate_model(training_loader= train_loader, testing_loader= test_loader, validation_loader= val_loader)
+
+        model.save_model_metrics(folder_path)
+
+        # check the chosen evaluation metric to find the best model
+        chosen_metric_distance = float(model.metrics['validation_R2']) # results indicated negative values for R2 in some cases
+        if chosen_metric_distance > best_metric_distance:
+            best_model = model
+            best_metrics = model.metrics
+            best_hyperparameters = model.hyperparameters
+            best_metric_distance = chosen_metric_distance
+    
+    # Save best model in a folder
+    current_datetime = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+    best_model_folder = os.path.join(folder_path, 'best_model', current_datetime)
+    os.makedirs(best_model_folder)
+
+    best_model_path = os.path.join(best_model_folder, 'best_model.pt')
+    torch.save(best_model.state_dict(), best_model_path)
+
+    with open(os.path.join(best_model_folder, 'metrics.json'), 'w') as file:
+        json.dump(best_metrics, file)
+
+    with open(os.path.join(best_model_folder, 'hyperparameters.json'), 'w') as file:
+        json.dump(best_hyperparameters, file)
+
+    return best_model, best_metrics, best_hyperparameters
+    
+
 
 
 
@@ -247,7 +347,7 @@ if __name__ == '__main__':
 
     
     model_config = get_nn_config('nn_config.yaml')
-    model = regression_NN(hidden_layer_width= model_config['hidden_layer_width'], depth= model_config['depth'])
+    model = regression_NN(hidden_layer_width= model_config['hidden_layer_width'], depth= model_config['depth'], dropout_rate= model_config['dropout_rate'])
 
     model.train(train_data_loader= train_loader, val_data_loader= val_loader, epochs= 10, config= model_config)
 
@@ -255,6 +355,9 @@ if __name__ == '__main__':
 
     folder_path = 'models/neural_networks/regression'
     model.save_model_metrics(folder_path)
+
+    
+    find_best_nn(train_loader= train_loader, val_loader= val_loader, test_loader= test_loader, folder_path='models/neural_networks/regression', n_configs= 4)
 
     #torch.save(model.state_dict(), 'regression/neural_networks/model.pt')
     

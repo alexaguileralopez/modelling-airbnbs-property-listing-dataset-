@@ -2,4 +2,5 @@ optimiser: 'SGD'
 lr : 0.001
 hidden_layer_width : 15
 depth : 7
+dropout_rate : 0.2
 

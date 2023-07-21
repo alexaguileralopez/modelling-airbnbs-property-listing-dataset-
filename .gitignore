@@ -2,7 +2,7 @@ airbnb-property-listings/
 runs/
 
 model.pt 
-regression/neural_networks/2023-07-20_17:32:45/
+regression/
 
 tester.py 
 classification_tester.py

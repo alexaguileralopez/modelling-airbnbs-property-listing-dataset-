@@ -23,10 +23,6 @@ class AirbnbNightlyPriceRegressionDataset(Dataset):
     def __init__(self) -> None:
         super().__init__()
 
-        '''
-        For this, instead of overcomplicating, the file that could be used instead of the raw csv could be the clean_tabular_data csv and load it into load airbnb
-        '''
-
         self.data = pd.read_csv('airbnb-property-listings/listing.csv')
         self.data = clean_tabular_data(raw_dataframe= self.data)
         self.X, self.y = load_airbnb(df=self.data, label= 'Price_Night')
@@ -116,6 +112,8 @@ class regression_NN(torch.nn.Module):
     
 
     def train(self, train_data_loader, val_data_loader, epochs, config):
+
+        '''Method to train the neural network with different parameters'''
 
         start_time = time.time()
         optimiser_name = config['optimiser']

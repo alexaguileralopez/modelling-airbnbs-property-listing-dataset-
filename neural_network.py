@@ -27,7 +27,7 @@ class AirbnbNightlyPriceRegressionDataset(Dataset):
 
         self.data = pd.read_csv('airbnb-property-listings/listing.csv')
         self.data = clean_tabular_data(raw_dataframe= self.data)
-        self.X, self.y = load_airbnb(df=self.data, label= 'Price_Night')
+        self.X, self.y = load_airbnb(df=self.data, label= 'Price_Night', Category= True)
 
         # Convert columns of self.X to float type
         self.X = self.X.astype(float)

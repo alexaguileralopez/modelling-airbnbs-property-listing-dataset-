@@ -109,41 +109,33 @@ def clean_tabular_data(raw_dataframe):
 
         return df
 
-def load_airbnb(df= pd.DataFrame , label=str):
+def load_airbnb(df= pd.DataFrame , label=str, Category = False):
      
-     ''' Function used to split the data into labels and features. 
+    ''' Function used to split the data into labels and features. 
      It takes as arguments the dataframe where the data is to be extracted and 
      the name of the variable that is wanted as label '''
      
-    # filter out columns with text data
+    # filter out columns with text data if wanted
+    if Category == False:
 
-     numerical_cols= ['guests', 'beds', 'bathrooms', 'Price_Night', 'Cleanliness_rating',
-            'Accuracy_rating', 'Communication_rating', 'Location_rating', 'Check-in_rating', 
-            'Value_rating', 'amenities_count', 'bedrooms']
-     
-     #labels = df[label].to_numpy(dtype= 'float64')
-     labels = df[label]
+        numerical_cols= ['guests', 'beds', 'bathrooms', 'Price_Night', 'Cleanliness_rating',
+                'Accuracy_rating', 'Communication_rating', 'Location_rating', 'Check-in_rating', 
+                'Value_rating', 'amenities_count', 'bedrooms']
+    elif Category == True:
+        numerical_cols = ['guests', 'beds', 'bathrooms', 'Price_Night', 'Cleanliness_rating',
+                'Accuracy_rating', 'Communication_rating', 'Location_rating', 'Check-in_rating', 
+                'Value_rating', 'amenities_count', 'bedrooms', 'Category']
+         
+    labels = df[label]
 
-     if label in numerical_cols:
+    if label in numerical_cols:
         features = df[numerical_cols].drop(label, axis=1)
-     else:
+    else:
         features = df[numerical_cols]
-     #features = features.to_numpy(dtype='float64')
-
-     #features = df[numerical_cols].to_numpy(dtype= 'float64').drop(label, axis = 1).reset_index(drop=True)
-
-     #features = df1.drop(label, axis=1)
      
-   
-    
-     
-     
+    tuple_data = (features, labels)
 
-     #features = features.values
-
-     tuple_data = (features, labels)
-
-     return tuple_data
+    return tuple_data
 
 
 

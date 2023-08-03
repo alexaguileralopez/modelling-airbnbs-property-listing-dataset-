@@ -105,12 +105,12 @@ For the regression problem, the model found as best performing is the SGDRegress
 - R2 = 0.42
 - MSE = 21262.03
 
-[code_snippets/best_regression_scatter.png]
+![Best regression scatter](code_snippets/best_regression_scatter.png)
 
 The scatter plot shows general positive correlation between the true labels and predicted values. As R2 is positive (0.42), it indicates that the model is capturing some of the variance in the data, and the predictions have a moderate correlation with the true labels.
 However, the points do not form a tight cluster around the ideal regression line (45º), indicating that the model is not capturing all the variance in the data.
 
-[code_snippets/best_regression_residual.png]
+![Best regression residual plot](code_snippets/best_regression_residual.png)
 
 The residual plot shows a random scatter of points around the horizontal line y=0. That suggests that the model's predictions have some level of bias, but it is capturing some of the variance in the data.
 
@@ -125,7 +125,7 @@ For the classification problem, the model found as best performing is the Gradie
 - Recall: 0.3554801894918174
 - F1 Score: 0.34657117582723634
 
-[code_snippets/best_classification_cm.png]
+![Best classification confusion matrix](code_snippets/best_classification_cm.png)
 
 The confusion matrix shows that for the 5 labels in 'Category', the model found a strong relationship for labels 2 and 4. In the case of label 3, the amount of false positives. In the case of labels 0 and 1 the correlation was detected, but it was not strong enough to underline it severely. 
 
@@ -163,12 +163,12 @@ Other methods have been included such as get_hyperparameters, and calculations o
 
 The TensorBoard tool provides visualisation tools to observe the process of training and validation of the data. As seen on the graph below, the training loss becomes smaller as more iterations are performed. Meaning a better result could be expected if the dataset was more extense:
 
-[code_snippets/training_scalar.png]
+![Training scalar](code_snippets/training_scalar.png)
 
 What can also be observed are the loss and rmse metrics for the validation data, which also descend steadily with increasing iterations of the loop. Ideally, these would drop to values between 1 and 0:
 
-[code_snippets/val_loss_scalar.png]
-[code_snippets/val_rmse_scalar.08.png]
+![Val loss scalar](code_snippets/val_loss_scalar.png)
+![Val RMSE scalar](code_snippets/val_rmse_scalar.08.png)
  
 The 'get_metrics' method calculates the average RMSE loss, R-squared, and interference latency across the entire dataset. It iterates through the data loader, computing predictions, RMSE loss, R-squared for each batch. The average metrics are then computed using the cumulative values. 
 
@@ -192,10 +192,10 @@ The best model found is
 
      {'training_duration': 0.3914968967437744, 'interference_latency': 1.157048236892884e-05, 'training_RMSE_loss': 3.304215749104818, 'training_R2': 0.0015443707141050062, 'validation_RMSE_loss': 4.263668777351093, 'validation_R2': 0.0037325275571722734, 'testing_RMSE_loss': 4.204518329666321, 'testing_R2': 0.0030592963638075865}
 
-[code_snippets/nn_regression_scatter_test.png]
+![NN regression scatter](code_snippets/nn_regression_scatter_test.png)
 
 
-[code_snippets/nn_regression_residual_test.png]
+![NN regression residual](code_snippets/nn_regression_residual_test.png)
 
 The training duration and interference latency indicate that the model is training and performing quickly.
 
@@ -209,7 +209,12 @@ Overall, the model's performance on both the training, validation, and testing s
 
 ## REUSING THE FRAMEWORK
 
-Now, the label chosen is the integer number of bedrooms. The previous label used in the last section 'Category', is now used as another feature, even though it is not a numerical value. 
+Now, the label chosen is the integer number of bedrooms. The previous label used in the last section 'Category', is now used as another feature, even though it is not a numerical value. In order to do that, an argument to the method load airbnb is added as Category:
+
+    def load_airbnb(df= pd.DataFrame , label=str, Category = False):
+
+If specified True, the features will contain the 'Category' column as well.
+
 
 
 

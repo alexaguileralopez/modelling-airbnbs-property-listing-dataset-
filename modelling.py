@@ -8,6 +8,7 @@ from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
 from sklearn.model_selection import GridSearchCV
 import matplotlib.pyplot as plt
+import seaborn as sns
 import pandas as pd
 import numpy as np
 import itertools
@@ -129,6 +130,8 @@ class BaseModel():
             r2 = r2_score(y_true= y_test, y_pred=y_pred)
 
             self.metrics = {
+                'y_pred': y_pred,
+                'y_true' : y_test,
                 'MSE' : mse,
                 'R2' : r2
 
@@ -149,6 +152,8 @@ class BaseModel():
             f1 = f1_score(y_test, y_pred, average = 'macro')
 
             self.metrics = {
+                'y_pred' : y_pred,
+                'y_true' : y_test,
                 'Accuracy' : accuracy,
                 'Precision' : precision,
                 'Recall' : recall,
@@ -158,6 +163,58 @@ class BaseModel():
             main_metric = f1
 
         return main_metric
+    
+    def plot_results(self, model_type):
+
+        ''' Method to plot the results of regression and classification models'''
+
+        if model_type == 'Classifier':
+
+            # Get the predicted and true labels from the metrics
+            y_pred = self.metrics['y_pred']
+            y_true = self.metrics['y_true']
+
+            # Create a confusion matrix
+            cm = confusion_matrix(y_true, y_pred) #confusion matrix
+
+            # Plot the confusion matrix as a heatmap
+            plt.figure(figsize=(8,6))
+            sns.heatmap(cm, annot= True, fmt='d', cmap= 'Blues', cbar= False)
+            plt.xlabel('Predicted labels')
+            plt.ylabel('True Labels')
+            plt.title('Confusion Matrix')
+            plt.show()
+
+            # Print other classification metrics
+            print('Accuracy:', self.metrics['Accuracy'])
+            print("Precision:", self.metrics['Precision'])
+            print("Recall:", self.metrics['Recall'])
+            print("F1 Score:", self.metrics['F1'])
+
+        elif model_type == 'Regressor':
+
+            # Get the predicted and true labels from the metrics
+            y_pred = self.metrics['y_pred']
+            y_true = self.metrics['y_true']
+
+            # Create a scatter plot of true labels vs. predicted labels
+            plt.figure(figsize=(8, 6))
+            sns.scatterplot(x=y_true, y=y_pred)
+            plt.xlabel("True Labels")
+            plt.ylabel("Predicted Labels")
+            plt.title("True vs. Predicted Labels")
+            plt.show()
+
+            # Create a scatter plot of residuals
+            residuals = y_true - y_pred
+            plt.figure(figsize=(8, 6))
+            sns.scatterplot(x=y_pred, y=residuals)
+            plt.axhline(y=0, color='r', linestyle='--')
+            plt.xlabel("Predicted Labels")
+            plt.ylabel("Residuals")
+            plt.title("Residual Plot")
+            plt.show()
+
         
     def save_model(self, folder):
 
@@ -530,6 +587,7 @@ class ModelsEvaluator:
         subfolder_names = [name for name in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, name)) and name != 'old']
         best_metrics = 0.0
         best_metrics_individual = 0.0
+        
 
         for folder_name in subfolder_names:
 
@@ -541,11 +599,15 @@ class ModelsEvaluator:
                 if self.model_type == 'Classification':
                     model_metrics_individual = model_metrics['F1']
                 elif self.model_type == 'Regression':
-                    model_metrics_individual == model_metrics['R2']
+                    if isinstance(model_metrics, dict):
+                        model_metrics_individual = model_metrics['R2']
+                    else:
+                        model_metrics_individual = model_metrics
 
                 if model_metrics_individual >= best_metrics_individual:
                     best_metrics = model_metrics
                     best_model = folder_name
+                    best_metrics_individual = best_metrics_individual
                 else: 
                     best_metrics = best_metrics
                 

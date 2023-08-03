@@ -98,6 +98,41 @@ As the evaluation of all models can be a long running process, a method to find 
 
 ## RESULTS
 
+For the regression problem, the model found as best performing is the SGDRegressor. The label chosen is 'Price_Night'.
+
+    {'alpha': 0.0001, 'learning_rate': 'constant', 'loss': 'epsilon_insensitive', 'max_iter': 1000, 'penalty': 'l2'}
+
+- R2 = 0.42
+- MSE = 21262.03
+
+[code_snippets/best_regression_scatter.png]
+
+The scatter plot shows general positive correlation between the true labels and predicted values. As R2 is positive (0.42), it indicates that the model is capturing some of the variance in the data, and the predictions have a moderate correlation with the true labels.
+However, the points do not form a tight cluster around the ideal regression line (45º), indicating that the model is not capturing all the variance in the data.
+
+[code_snippets/best_regression_residual.png]
+
+The residual plot shows a random scatter of points around the horizontal line y=0. That suggests that the model's predictions have some level of bias, but it is capturing some of the variance in the data.
+
+Overall, the model's performance is moderate, with an R2 of 0.42 indicating that there is still room for improvement.
+
+For the classification problem, the model found as best performing is the Gradient Boosting Classifier.
+
+    {'criterion': 'friedman_mse', 'learning_rate': 0.1, 'max_depth': 3, 'max_features': 'log2', 'min_samples_leaf': 3, 'min_samples_split': 10, 'n_estimators': 500}, 
+
+- Accuracy: 0.3614457831325301
+- Precision: 0.3591074121956475
+- Recall: 0.3554801894918174
+- F1 Score: 0.34657117582723634
+
+[code_snippets/best_classification_cm.png]
+
+The confusion matrix shows that for the 5 labels in 'Category', the model found a strong relationship for labels 2 and 4. In the case of label 3, the amount of false positives. In the case of labels 0 and 1 the correlation was detected, but it was not strong enough to underline it severely. 
+
+The results suggest that the chosen best model is not performing well on the given classification task. The low accuracy, precision, recall and F1 score indicate that the model is struggling to make accurate predictions for the positive class, and overall performance is not satisfactory. 
+
+To improve the model's performance, exploring different hyperparameter settings can be explored, also feature engineering can be useful. 
+
 ## DEEP LEARNING APPROACH
 
 Making use of the PyTorch library, the same challenges can be tackled using neural networks. The file [neural_network.py] contains the framework to train a custom built neural network to predict the Price Night or Number of Rooms on unseen data. 
@@ -125,6 +160,15 @@ The layers of the neural network are created with a for loop, determined by the 
 This code creates a neural network model with 'depth' number of hidden layers, where each layer is a linear layer followed by Batch Normalisation, ReLU activation, and Dropout. The input size of each layer is equal to the number of neurons in the previous hidden layer ('hidden_layer_width'). The model's output is a single value, suitable for regression problems. Batch Normalisation and Dropout are later additions that have been made to the code, that will be discussed in the results section. 
 
 Other methods have been included such as get_hyperparameters, and calculations of rmse loss and r2 (as in the regression model class outlined previously). The most relevant method is 'train'. This method takes in a training data loader, a validation data loader, number of epochs and a configuration dictionary. The 'train' method performs training using the specified data loaders and training configuration. It employs an optimiser chosen based on the configuration(e.g., SGD or Adam) and calculates the MSE loss during the training process. The training progress and validation loss are monitored and logged using 'SummaryWriter'.
+
+The TensorBoard tool provides visualisation tools to observe the process of training and validation of the data. As seen on the graph below, the training loss becomes smaller as more iterations are performed. Meaning a better result could be expected if the dataset was more extense:
+
+[code_snippets/training_scalar.png]
+
+What can also be observed are the loss and rmse metrics for the validation data, which also descend steadily with increasing iterations of the loop. Ideally, these would drop to values between 1 and 0:
+
+[code_snippets/val_loss_scalar.png]
+[code_snippets/val_rmse_scalar.08.png]
  
 The 'get_metrics' method calculates the average RMSE loss, R-squared, and interference latency across the entire dataset. It iterates through the data loader, computing predictions, RMSE loss, R-squared for each batch. The average metrics are then computed using the cumulative values. 
 
@@ -138,6 +182,34 @@ The find_best_nn function is used to sequentially train multiple models with dif
 
 ## RESULTS
 
+The best model found is 
+
+- The hyperparameters.json contains:
+
+    {'hidden_layer_width': 32, 'depth': 3, 'dropout_rate': 0.5, 'lr': 0.01, 'optimiser': 'Adam'}
+
+- The metrics.json contains:
+
+     {'training_duration': 0.3914968967437744, 'interference_latency': 1.157048236892884e-05, 'training_RMSE_loss': 3.304215749104818, 'training_R2': 0.0015443707141050062, 'validation_RMSE_loss': 4.263668777351093, 'validation_R2': 0.0037325275571722734, 'testing_RMSE_loss': 4.204518329666321, 'testing_R2': 0.0030592963638075865}
+
+[code_snippets/nn_regression_scatter_test.png]
+
+
+[code_snippets/nn_regression_residual_test.png]
+
+The training duration and interference latency indicate that the model is training and performing quickly.
+
+The training RMSE loss of 3.30 suggests that the model has some errors in its predictions on the training data. The training R2 score of 0.00154 indicates that the model performs worse than a simple horizontal line, suggesting that it is not effectively capturing the variance in the training data.
+
+On the validation set, the RMSE loss (4.26) and R2 score (0.00373) both indicate worse performance compared to the training set. These results suggest that the model is not generalizing well to unseen data and may be overfitting to the training set.
+
+The testing results also show a similar pattern with a RMSE loss of 4.20 and an R2 score of 0.00306, indicating poor generalization to new data.
+
+Overall, the model's performance on both the training, validation, and testing sets is subpar, as indicated by the low R2 scores and relatively high RMSE values. This suggests that the model is not effectively capturing the underlying patterns in the data and may require further hyperparameter tuning, architecture adjustments, or data preprocessing to improve its performance. Additionally, investigating the quality of the data and potential feature engineering could also be beneficial to enhance the model's predictive capabilities.
+
+## REUSING THE FRAMEWORK
+
+Now, the label chosen is the integer number of bedrooms. The previous label used in the last section 'Category', is now used as another feature, even though it is not a numerical value. 
 
 
 

@@ -1,4 +1,4 @@
-optimiser: 'SGD'
+optimiser: 'Adam'
 lr : 0.001
 hidden_layer_width : 15
 depth : 7

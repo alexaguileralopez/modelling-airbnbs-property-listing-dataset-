@@ -15,6 +15,8 @@ import numpy as np
 import yaml
 import json
 from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+import seaborn as sns
 from torch.utils.tensorboard import SummaryWriter
 
 
@@ -170,6 +172,7 @@ class regression_NN(torch.nn.Module):
         r_squared = 0.0
         num_samples = 0
         total_latency = 0.0
+ 
 
         with torch.no_grad(): #disable gradient computation for evaluation
             for batch in data_loader:
@@ -177,6 +180,7 @@ class regression_NN(torch.nn.Module):
                 start_time = time.time() # start time
                 prediction = self(features)
                 end_time = time.time() # end time
+
 
                 #calculate RMSE loss
                 batch_rmse = self.calculate_rmse_loss(prediction, labels)
@@ -191,7 +195,7 @@ class regression_NN(torch.nn.Module):
                 # latency calculation
                 batch_latency = end_time - start_time
                 total_latency += batch_latency
-
+            
             # calculate average metrics across all batches
             avg_rmse = rmse_loss / num_samples
             avg_r_squared = r_squared / num_samples
@@ -201,6 +205,56 @@ class regression_NN(torch.nn.Module):
             self.metrics['interference_latency'] = avg_interference_latency
 
         return avg_rmse, avg_r_squared
+    
+    def predict(self, data_loader):
+
+        '''Method to make predictions from a data loader'''
+
+        y_true_list = []
+        y_pred_list = []
+
+        with torch.no_grad():
+            for batch in data_loader:
+                features, labels = batch
+                prediction = self(features)
+
+                # Append true labels and predictions to the respective lists
+                y_true_list.append(labels)
+                y_pred_list.append(prediction)
+
+        # Concatenate all batches to create the final tensors
+        y_true = torch.cat(y_true_list, dim=0)
+        y_pred = torch.cat(y_pred_list, dim=0)
+
+        return y_true, y_pred
+    
+    def plot_results(self, data_loader):
+
+        '''Method to plot results from a data loader'''
+
+        y_true , y_pred = self.predict(data_loader)
+        
+        # Convert tensor to array and flatten
+        y_true = y_true.numpy().flatten() 
+        y_pred = y_pred.numpy().flatten()
+
+        # Create a scatter plot of true labels vs. predicted labels
+        plt.figure(figsize=(8, 6))
+        sns.scatterplot(x=y_true, y=y_pred)
+        plt.xlabel("True Labels")
+        plt.ylabel("Predicted Labels")
+        plt.title("True vs. Predicted Labels")
+        plt.show()
+
+        # Create a scatter plot of residuals
+        residuals = y_true - y_pred
+        plt.figure(figsize=(8, 6))
+        sns.scatterplot(x=y_pred, y=residuals)
+        plt.axhline(y=0, color='r', linestyle='--')
+        plt.xlabel("Predicted Labels")
+        plt.ylabel("Residuals")
+        plt.title("Residual Plot")
+        plt.show()
    
     
     def evaluate_model(self, training_loader, validation_loader, testing_loader):
@@ -355,8 +409,11 @@ if __name__ == '__main__':
     model.save_model_metrics(folder_path)
 
     
-    find_best_nn(train_loader= train_loader, val_loader= val_loader, test_loader= test_loader, folder_path='models/neural_networks/regression', n_configs= 4)
+    best_model, best_metrics, best_hyperparameters = find_best_nn(train_loader= train_loader, val_loader= val_loader, test_loader= test_loader, folder_path='models/neural_networks/regression', n_configs= 10)
 
+    print('Best Metrics',best_metrics)
+    print( 'Best Hyperparameters', best_hyperparameters) 
+    
     #torch.save(model.state_dict(), 'regression/neural_networks/model.pt')
     
     #state_dict = torch.load('model.pt')

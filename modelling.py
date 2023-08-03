@@ -197,13 +197,24 @@ class BaseModel():
             y_pred = self.metrics['y_pred']
             y_true = self.metrics['y_true']
 
+            # Convert pandas Series to NumPy arrays and then to numeric data type
+
+            y_true = y_true.to_numpy().astype(float)
+
             # Create a scatter plot of true labels vs. predicted labels
-            plt.figure(figsize=(8, 6))
+            #plt.figure(figsize=(8, 6))
+            plt.figure(figsize=(10,8))
             sns.scatterplot(x=y_true, y=y_pred)
+            #plt.scatter(y_true, y_pred)
             plt.xlabel("True Labels")
             plt.ylabel("Predicted Labels")
             plt.title("True vs. Predicted Labels")
             plt.show()
+
+
+            # convert lists to numpy arrays
+            y_pred = np.array(y_pred)
+            y_true = np.array(y_true)
 
             # Create a scatter plot of residuals
             residuals = y_true - y_pred
@@ -225,12 +236,17 @@ class BaseModel():
 
         os.makedirs(folder, exist_ok= True)
         dump(self.model, os.path.join(folder, 'model.joblib'))
+
+        # exclude y_pred y_true from saving
+        filtered_metrics = self.metrics.copy()
+        filtered_metrics.pop('y_pred', None)
+        filtered_metrics.pop('y_true', None)
         
         with open(os.path.join(folder, 'hyperparameters.json'), 'w') as hyperparameters_file:
             json.dump(self.hyperparameters, hyperparameters_file)
 
         with open(os.path.join(folder, 'metrics.json'), 'w') as metrics_file:
-            json.dump(self.metrics, metrics_file)
+            json.dump(filtered_metrics, metrics_file)
             
         
 
@@ -451,7 +467,6 @@ class RegressionModel(BaseModel):
     def save_model(self, folder):
 
         super().save_model(folder= folder)
-
 
 
 class ModelsEvaluator:

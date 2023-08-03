@@ -213,7 +213,45 @@ Now, the label chosen is the integer number of bedrooms. The previous label used
 
     def load_airbnb(df= pd.DataFrame , label=str, Category = False):
 
-If specified True, the features will contain the 'Category' column as well.
+If specified True, the features will contain the 'Category' column as well. That feature was also encoded, so that it was added as another numerical feature for the model to interpret correctly:
+
+        elif Category == True:
+
+        numerical_cols = ['guests', 'beds', 'bathrooms', 'Price_Night', 'Cleanliness_rating',
+                'Accuracy_rating', 'Communication_rating', 'Location_rating', 'Check-in_rating', 
+                'Value_rating', 'amenities_count', 'bedrooms', 'Category']
+        
+        label_encoder = LabelEncoder() # necessary to encode category as numbers
+        labels = df[label]
+
+        if label in numerical_cols:
+            features = df[numerical_cols].drop(label, axis=1)
+            
+        else:
+            features = df[numerical_cols]
+        
+        features['Category'] = label_encoder.fit_transform(df['Category'])
+
+The results in the Regression Models give as the best one the Random Forest Regressor with the following hyperparameters:
+    {'criterion': 'squared_error', 'max_depth': 5, 'min_samples_leaf': 1, 'min_samples_split': 2, 'n_estimators': 500}
+
+In this case, the change in metrics was substantial:
+
+- MSE: 0.20262645863350662
+- R2: 0.8358206741125905
+
+![bedroom_scatter](code_snippets/bedrooms_regression_scatter.png)
+
+The scatter plot indicates clustering around the desired values, with a 45º slope. This indicates that the Random Forest model is a good approach for this problem.
+
+![bedroom_residual](code_snippets/bedrooms_regression_residual.png)
+
+The residual indicates a well-fitted regression model. This is indicative that the model is predicting the target values correctly, without a systematic overestimation or underestimation, as earlier. 
+
+
+
+
+
 
 
 

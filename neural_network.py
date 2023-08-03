@@ -27,7 +27,7 @@ class AirbnbNightlyPriceRegressionDataset(Dataset):
 
         self.data = pd.read_csv('airbnb-property-listings/listing.csv')
         self.data = clean_tabular_data(raw_dataframe= self.data)
-        self.X, self.y = load_airbnb(df=self.data, label= 'Price_Night', Category= True)
+        self.X, self.y = load_airbnb(df=self.data, label= 'bedrooms', Category= True) #change label if necessary
 
         # Convert columns of self.X to float type
         self.X = self.X.astype(float)
@@ -74,7 +74,7 @@ class regression_NN(torch.nn.Module):
         self.depth = depth
 
         layers = []
-        input_size = 11
+        input_size = 12 # 11 for first exercises
         for i in range(depth):
             layers.append(torch.nn.Linear(input_size, hidden_layer_width))
             layers.append(torch.nn.BatchNorm1d(hidden_layer_width)) # Batch Normalisation

@@ -95,3 +95,54 @@ print('Best model:', best_model)
 print('Best hyperparams:', hyperparameters)
 print('Best metrics:', best_metrics)
 # %%
+
+''' Creating the best regression model and plotting its results'''
+
+import pandas as pd
+
+from modelling import BaseModel, RegressionModel, ClassificationModel
+from tabular_data import clean_tabular_data, load_airbnb
+from sklearn.model_selection import train_test_split
+
+df = pd.read_csv('airbnb-property-listings/listing.csv')
+df_1= clean_tabular_data(raw_dataframe= df)
+dataset =load_airbnb(df= df_1, label= 'bedrooms', Category= True)
+
+X, y = dataset
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
+X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=0) # validation slightly larger than test
+
+train_set = (X_train, y_train)
+test_set = (X_test, y_test)
+val_set = (X_val, y_val)
+
+model = BaseModel(model_type= 'RandomForestRegressor')
+best_hyperparams = {'criterion': 'squared_error', "max_depth": 5, "min_samples_leaf": 1, "min_samples_split": 2, "n_estimators": 500}
+
+
+model.load_hyperparameters(best_hyperparams)
+
+model.fit(train_set)
+
+r2 = model.evaluate(test_set, model_type= 'Regressor')
+
+
+
+plot = model.plot_results(model_type= 'Regressor')
+# %%
+from neural_network import regression_NN, AirbnbNightlyPriceRegressionDataset, find_best_nn
+from torch.utils.data import DataLoader
+import numpy as np
+from sklearn.model_selection import train_test_split
+
+np.random.seed(0)
+dataset = AirbnbNightlyPriceRegressionDataset()
+train_data, test_data = train_test_split(dataset, test_size=0.2, random_state=42)
+train_data, val_data = train_test_split(train_data, test_size=0.2, random_state=42)
+
+
+train_loader = DataLoader(train_data, batch_size=32, shuffle=True)
+test_loader = DataLoader(test_data, batch_size=32, shuffle=True)
+val_loader = DataLoader(val_data, batch_size=32, shuffle=True)
+
+best_model, best_metrics, best_hyperparameters = find_best_nn(val_loader= val_loader, train_loader= train_loader, test_loader= test_loader)

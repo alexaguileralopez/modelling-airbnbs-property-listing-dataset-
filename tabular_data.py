@@ -2,6 +2,7 @@
 import pandas as pd
 import ast
 import numpy as np
+from sklearn.preprocessing import LabelEncoder
 
 
 def remove_rows_with_missing_ratings(df):
@@ -121,17 +122,31 @@ def load_airbnb(df= pd.DataFrame , label=str, Category = False):
         numerical_cols= ['guests', 'beds', 'bathrooms', 'Price_Night', 'Cleanliness_rating',
                 'Accuracy_rating', 'Communication_rating', 'Location_rating', 'Check-in_rating', 
                 'Value_rating', 'amenities_count', 'bedrooms']
+        
+        labels = df[label]
+        if label in numerical_cols:
+            features = df[numerical_cols].drop(label, axis=1)
+        else:
+            features = df[numerical_cols]
+
     elif Category == True:
+
         numerical_cols = ['guests', 'beds', 'bathrooms', 'Price_Night', 'Cleanliness_rating',
                 'Accuracy_rating', 'Communication_rating', 'Location_rating', 'Check-in_rating', 
                 'Value_rating', 'amenities_count', 'bedrooms', 'Category']
-         
-    labels = df[label]
+        
+        label_encoder = LabelEncoder() # necessary to encode category as numbers
+        labels = df[label]
 
-    if label in numerical_cols:
-        features = df[numerical_cols].drop(label, axis=1)
-    else:
-        features = df[numerical_cols]
+        if label in numerical_cols:
+            features = df[numerical_cols].drop(label, axis=1)
+            
+        else:
+            features = df[numerical_cols]
+        
+        encoded_category = label_encoder.fit_transform(df['Category'])
+        features['Category'] = pd.Series(encoded_category, dtype= float)
+            
      
     tuple_data = (features, labels)
 

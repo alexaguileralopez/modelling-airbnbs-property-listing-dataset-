@@ -31,6 +31,7 @@ class AirbnbNightlyPriceRegressionDataset(Dataset):
 
         # Convert columns of self.X to float type
         self.X = self.X.astype(float)
+        self.y = self.y.astype(float)
         
         # scale the data
         self.scaler = StandardScaler()

@@ -145,4 +145,11 @@ train_loader = DataLoader(train_data, batch_size=32, shuffle=True)
 test_loader = DataLoader(test_data, batch_size=32, shuffle=True)
 val_loader = DataLoader(val_data, batch_size=32, shuffle=True)
 
-best_model, best_metrics, best_hyperparameters = find_best_nn(val_loader= val_loader, train_loader= train_loader, test_loader= test_loader)
+best_model, best_metrics, best_hyperparameters = find_best_nn(val_loader= val_loader, train_loader= train_loader, test_loader= test_loader, 
+                                                              folder_path='models/neural_networks/regression', n_configs= 5) 
+
+
+best_model.train(train_data_loader= train_loader, val_data_loader= val_loader, epochs= 10, config= best_hyperparameters)
+best_model.evaluate_model(training_loader= train_loader, validation_loader= val_loader, testing_loader= test_loader)
+best_model.plot_results(data_loader= test_loader)
+# %%

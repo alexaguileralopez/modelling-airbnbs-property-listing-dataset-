@@ -248,6 +248,50 @@ The scatter plot indicates clustering around the desired values, with a 45º slo
 
 The residual indicates a well-fitted regression model. This is indicative that the model is predicting the target values correctly, without a systematic overestimation or underestimation, as earlier. 
 
+For the Neural Network, this is the best model chosen:
+
+    regression_NN(
+    (layers): Sequential(
+        (0): Linear(in_features=12, out_features=32, bias=True)
+        (1): BatchNorm1d(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (2): ReLU()
+        (3): Dropout(p=0.5, inplace=False)
+        (4): Linear(in_features=32, out_features=32, bias=True)
+        (5): BatchNorm1d(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (6): ReLU()
+        (7): Dropout(p=0.5, inplace=False)
+        (8): Linear(in_features=32, out_features=32, bias=True)
+        (9): BatchNorm1d(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (10): ReLU()
+        (11): Dropout(p=0.5, inplace=False)
+        (12): Linear(in_features=32, out_features=1, bias=True)
+    )
+    )
+
+With the corresponding hyperparameters:
+
+    {'hidden_layer_width': 32,
+    'depth': 3,
+    'dropout_rate': 0.5,
+    'lr': 0.1,
+    'optimiser': 'SGD'}
+
+And the metrics obtained are:
+
+- RMSE loss: = 0.022109605820782214
+- R2 = 0.022430370011961603
+
+The results are also good for the scatter plot:
+
+![bedrooms_NN_scatter](code_snippets/bedrooms_regression_scatter.png)
+
+It shows clustering around the 45º line, but not as much as it was showing with the Random Forest Regressor. The low R2 suggests that the model is not able to explain much of the variance in the target variable based on the given features.
+
+![bedrooms_NN_residual](code_snippets/bedrooms_regression_residual.png)
+
+As for the residual plot, many points are above the red line, suggesting underestimation of the data, while many others are below the line, suggesting overestimation. In general, it suggests that the model is not perfectly capturing the underlying relationship between the input features and the target variable.
+
+Hence, the best model to explain the relationship between number of bedrooms and the other features is the Random Forest Regressor, with the specified hyperparameters. 
 
 
 
